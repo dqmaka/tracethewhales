@@ -14,7 +14,16 @@ const JOB_NAME = "discover-wallets";
 // total for one run). Only spend time on rescoring if there's real margin
 // left, and cap it well short of the ceiling either way.
 const SAFE_TOTAL_BUDGET_MS = 22_000;
-const MAX_RESCORE_BUDGET_MS = 5_000;
+// Raised from 5s: with the watched-wallet pool now 70+ and growing, 5s/tick
+// (RESCORE_BATCH_SIZE=5 wallets) left a backlog that took many hours to
+// cycle back to any given wallet — long enough for a wallet to qualify
+// clean and turn into an obvious high-frequency bot before ever being
+// re-checked (live-observed: several wallets doing 100-700+ trades/30min
+// while still isWatched). Still bounded by whatever's actually left of
+// SAFE_TOTAL_BUDGET_MS via the Math.min below, so this can't blow the
+// overall cron past its ceiling — it just lets rescoring use more of
+// whatever margin is available.
+const MAX_RESCORE_BUDGET_MS = 8_000;
 
 export async function GET(req: NextRequest) {
   const secret = process.env.CRON_SECRET;

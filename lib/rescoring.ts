@@ -11,8 +11,16 @@ import { getCachedSellConvergenceSignals } from "./sell-signals";
 // heavier-than-usual run). The caller (the cron route) is expected to pass
 // only whatever time is actually left, capped at this default — this step
 // must never assume it gets a full window of its own.
-const RESCORE_BATCH_SIZE = 5;
-const DEFAULT_RESCORE_TIME_BUDGET_MS = 5_000;
+// Raised from 5: with the watched pool now 70+ and growing, a batch of 5/tick
+// left a backlog deep enough that a wallet could go many hours (sometimes
+// its entire "never rescored" life) without a re-check — long enough to
+// qualify clean and turn into an obvious high-frequency bot in the
+// meantime (live-observed: several wallets doing 100-700+ trades/30min,
+// still isWatched, none yet reached by the rotation). The per-iteration time
+// check below means a bigger batch size costs nothing when the time budget
+// is tight — it only raises the ceiling for ticks that have room to spare.
+const RESCORE_BATCH_SIZE = 12;
+const DEFAULT_RESCORE_TIME_BUDGET_MS = 8_000;
 const RESCORE_PER_WALLET_TIMEOUT_MS = 3_000;
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T | null> {
