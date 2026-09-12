@@ -6,11 +6,39 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { StatLabel } from "@/components/StatLabel";
 import { colors, mono } from "@/components/theme";
 import { PriceChart } from "@/components/PriceChart";
+import { InfoTooltip } from "@/components/InfoTooltip";
 import { getTokenDetail } from "@/lib/dashboard-data";
 import { formatUsd, truncateAddress, formatRelativeTime } from "@/lib/format";
 import { MIN_SIGNAL_LIQUIDITY_USD } from "@/lib/signals";
 
 export const dynamic = "force-dynamic";
+
+/**
+ * Renounced (authority == null) is reassurance, not just the absence of a
+ * warning — shown either way (unlike the signals pipeline's riskFlags,
+ * which only ever list active concerns) so silence on this page can't be
+ * misread as "unchecked" rather than "verified safe". Omitted entirely only
+ * when the on-chain lookup itself failed (active === null).
+ */
+function AuthorityBadge({ label, active, tooltip }: { label: string; active: boolean; tooltip: string }) {
+  return (
+    <div
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 5,
+        fontSize: 11,
+        padding: "3px 9px",
+        borderRadius: 999,
+        background: active ? "rgba(255,122,107,0.1)" : "rgba(53,245,160,0.1)",
+        color: active ? colors.coral : colors.mint,
+      }}
+    >
+      {label}: {active ? "Active" : "Renounced"}
+      <InfoTooltip text={tooltip} />
+    </div>
+  );
+}
 
 export default async function TokenDetailPage({
   params,
@@ -93,21 +121,36 @@ export default async function TokenDetailPage({
                 {token.mint}
               </div>
               {token.name && <div style={{ fontSize: 12.5, color: colors.textDim, marginTop: 4 }}>{token.name}</div>}
-              {token.liquidityUsd !== null && token.liquidityUsd < MIN_SIGNAL_LIQUIDITY_USD && (
-                <div
-                  style={{
-                    marginTop: 8,
-                    display: "inline-block",
-                    fontSize: 11,
-                    padding: "3px 9px",
-                    borderRadius: 999,
-                    background: "rgba(255,122,107,0.1)",
-                    color: colors.coral,
-                  }}
-                >
-                  Low liquidity — may not be possible to exit a real position without heavy slippage
-                </div>
-              )}
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
+                {token.liquidityUsd !== null && token.liquidityUsd < MIN_SIGNAL_LIQUIDITY_USD && (
+                  <div
+                    style={{
+                      display: "inline-block",
+                      fontSize: 11,
+                      padding: "3px 9px",
+                      borderRadius: 999,
+                      background: "rgba(255,122,107,0.1)",
+                      color: colors.coral,
+                    }}
+                  >
+                    Low liquidity — may not be possible to exit a real position without heavy slippage
+                  </div>
+                )}
+                {token.mintAuthorityActive !== null && (
+                  <AuthorityBadge
+                    label="Mint authority"
+                    active={token.mintAuthorityActive}
+                    tooltip="Whether the token deployer can still mint new supply at will. An active mint authority means the total supply isn't fixed — it could be inflated at any time, diluting every holder. Renounced (revoked, permanently) is the safer state."
+                  />
+                )}
+                {token.freezeAuthorityActive !== null && (
+                  <AuthorityBadge
+                    label="Freeze authority"
+                    active={token.freezeAuthorityActive}
+                    tooltip="Whether the token deployer can still freeze any holder's tokens, blocking them from selling. An active freeze authority is a classic rug vector — Renounced (revoked, permanently) means no one can lock your funds this way."
+                  />
+                )}
+              </div>
             </div>
             <a
               href={`https://solscan.io/token/${token.mint}`}

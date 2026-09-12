@@ -200,6 +200,41 @@ export async function rpcCall<T>(method: string, params: unknown[]): Promise<T> 
   return json.result as T;
 }
 
+interface MintAccountInfoResult {
+  value: {
+    data: {
+      parsed: {
+        info: {
+          mintAuthority: string | null;
+          freezeAuthority: string | null;
+        };
+      };
+    } | null;
+  } | null;
+}
+
+export interface MintAuthorities {
+  mintAuthority: string | null;
+  freezeAuthority: string | null;
+}
+
+/**
+ * Whether this mint's authorities are still live — a still-active mint
+ * authority means the deployer can print more supply at will; a still-active
+ * freeze authority means they can lock any holder's tokens at will. Both are
+ * classic rug vectors, and both are plain fields on the on-chain SPL Token
+ * Mint account itself (via getAccountInfo, jsonParsed) — not dependent on
+ * any third-party indexer's curation or lag, unlike Jupiter's equivalent
+ * `audit` field (already used in lib/discovery.ts, but only for tokens that
+ * happen to appear in Jupiter's trending list).
+ */
+export async function getMintAuthorities(mint: string): Promise<MintAuthorities> {
+  const result = await rpcCall<MintAccountInfoResult>("getAccountInfo", [mint, { encoding: "jsonParsed" }]);
+  const info = result.value?.data?.parsed?.info;
+  if (!info) throw new Error(`Mint account not found or not parseable for ${mint}`);
+  return { mintAuthority: info.mintAuthority, freezeAuthority: info.freezeAuthority };
+}
+
 interface TokenAccountsByOwnerResult {
   value: {
     account: {

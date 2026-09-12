@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import type { Tone } from "@/components/theme";
 import { formatUsd } from "@/lib/format";
 import { getLiveWalletActivity } from "@/lib/wallet-activity";
-import { getTokenBalance } from "@/lib/helius";
+import { getTokenBalance, getMintAuthorities } from "@/lib/helius";
 import { getHistoricalPrice } from "@/lib/geckoterminal";
 import { getTokenOverview } from "@/lib/dexscreener";
 import type { SmartScoreBreakdown } from "@/lib/scoring";
@@ -323,6 +323,10 @@ export interface TokenDetail {
   wallets: TokenWalletActivity[];
   priceHistory: TokenPricePoint[];
   focusWallet: { address: string; label: string | null; trades: TokenTradeMarker[] } | null;
+  /** null = the on-chain lookup itself failed — distinct from a verified
+   * "renounced" (false). Never treat null as "safe". */
+  mintAuthorityActive: boolean | null;
+  freezeAuthorityActive: boolean | null;
 }
 
 const PRICE_HISTORY_DAYS = 7;
@@ -393,6 +397,16 @@ export async function getTokenDetail(mint: string, focusWalletAddress?: string):
     console.warn(`GeckoTerminal price history lookup failed for ${mint}:`, (err as Error).message);
   }
 
+  let mintAuthorityActive: boolean | null = null;
+  let freezeAuthorityActive: boolean | null = null;
+  try {
+    const authorities = await getMintAuthorities(mint);
+    mintAuthorityActive = authorities.mintAuthority !== null;
+    freezeAuthorityActive = authorities.freezeAuthority !== null;
+  } catch (err) {
+    console.warn(`Mint authority lookup failed for ${mint}:`, (err as Error).message);
+  }
+
   let focusWallet: TokenDetail["focusWallet"] = null;
   if (focusWalletAddress) {
     // The chart markers need individual trades (timestamp + type + amount),
@@ -425,6 +439,8 @@ export async function getTokenDetail(mint: string, focusWalletAddress?: string):
     wallets,
     priceHistory,
     focusWallet,
+    mintAuthorityActive,
+    freezeAuthorityActive,
   };
 }
 
