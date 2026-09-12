@@ -1,0 +1,40 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    # Placeholder values only — prisma generate/tsc/vitest/next build never
+    # actually connect to a database (verified locally: all four run clean
+    # with no real DATABASE_URL at all), so no real secret needs to live in
+    # CI. Both vars are required because prisma.config.ts reads them eagerly
+    # (env() throws on a missing var, even one prisma generate itself never
+    # uses at runtime).
+    env:
+      DATABASE_URL: "postgresql://user:pass@localhost:5432/db"
+      DIRECT_URL: "postgresql://user:pass@localhost:5432/db"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npx prisma generate
+
+      - name: Type check
+        run: npx tsc --noEmit
+
+      - name: Tests
+        run: npx vitest run
+
+      - name: Build
+        run: npx next build
