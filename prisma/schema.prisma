@@ -4,6 +4,16 @@
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  // Migrations need a connection that supports prepared statements/session
+  // state — DATABASE_URL points at Supabase's PgBouncer *transaction*
+  // pooler (pgbouncer=true), which breaks that (observed live: "prepared
+  // statement s0 does not exist" from `prisma migrate`). Same host/user,
+  // port 5432 instead of 6543 — Supabase's *session* pooler, which behaves
+  // like a direct connection. The actual db.<ref>.supabase.co direct host
+  // wasn't reachable from here (IPv6-only without Supabase's paid IPv4
+  // add-on), so this is the one that actually works, not just the
+  // textbook-recommended one.
+  directUrl = env("DIRECT_URL")
 }
 
 generator client {
