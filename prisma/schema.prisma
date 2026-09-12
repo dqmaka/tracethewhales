@@ -1,0 +1,236 @@
+// TraceTheWhales — Prisma Schema
+// Abgeleitet aus den Feldern, die im Dashboard-Mockup verwendet werden.
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Wallet {
+  id           String   @id @default(cuid())
+  address      String   @unique          // z.B. "7xKX...9pQm" (voll, nicht gekürzt)
+  label        String?                   // "Whale #1", "Fund wallet" — optional, manuell/automatisch vergeben
+  tag          String?                   // "Early adopter", "Insider-Verdacht" etc.
+  smartScore   Int      @default(0)      // 0–100, berechnet von lib/scoring.ts
+  pnl30d       Float    @default(0)      // Performance in % über 30 Tage
+  firstSeenAt  DateTime @default(now())
+  isWatched    Boolean  @default(true)   // für spätere User-Watchlists
+  // Best-effort: wer diese Wallet zuletzt mit SOL "aufgeladen" hat, ermittelt
+  // aus dem jüngsten sichtbaren nativen SOL-Transfer in der getrackten
+  // Historie (nicht zwingend die allererste Finanzierung seit Genese). Zwei
+  // "unabhängige" Konvergenz-Wallets mit derselben fundingSource sind
+  // vermutlich dieselbe Person/derselbe Bot — siehe lib/signals.ts.
+  fundingSource String?
+  // Last time this already-tracked wallet's score/PnL/bot-penalties were
+  // re-derived from its *current* on-chain behavior, rather than just kept
+  // frozen at whatever it was when it first qualified. Null = never
+  // rescored yet (goes first in the rotation). See lib/rescoring.ts.
+  lastRescoredAt DateTime?
+
+  transactions Transaction[]
+  scoreHistory ScoreSnapshot[]
+
+  @@index([smartScore])
+  @@index([pnl30d])
+  @@index([lastRescoredAt])
+}
+
+model Token {
+  id        String   @id @default(cuid())
+  // NOT unique: ticker squatting/clone tokens are common on Solana, so two
+  // different mints can legitimately share the same symbol (e.g. "STONK").
+  // Only the mint address actually identifies a token.
+  symbol    String                        // "JUP", "SOL", "BONK"
+  mint      String   @unique             // Solana-Token-Mint-Adresse
+  name      String?
+
+  transactions Transaction[]
+
+  @@index([symbol])
+}
+
+model Transaction {
+  id          String   @id @default(cuid())
+  wallet      Wallet   @relation(fields: [walletId], references: [id])
+  walletId    String
+  token       Token    @relation(fields: [tokenId], references: [id])
+  tokenId     String
+  type        TxType                     // BUY | SELL
+  amountUsd   Float                      // "$48.200" -> 48200
+  txHash      String   @unique
+  occurredAt  DateTime @default(now())   // Basis für "vor 2 Min" im Live-Feed
+
+  @@index([occurredAt])
+  @@index([walletId, occurredAt])
+}
+
+enum TxType {
+  BUY
+  SELL
+}
+
+// Tages-Snapshot des Scores, damit die Sparkline aus echten Werten statt
+// Zufallsdaten gebaut werden kann (ein Eintrag pro Wallet pro Tag reicht).
+model ScoreSnapshot {
+  id        String   @id @default(cuid())
+  wallet    Wallet   @relation(fields: [walletId], references: [id])
+  walletId  String
+  score     Int
+  date      DateTime @default(now())
+
+  @@unique([walletId, date])
+}
+
+// Alerts werden aus Transaktionen abgeleitet (z.B. via Trigger/Job), aber als
+// eigene Tabelle gespeichert, damit der Live-Feed schnell gelesen werden kann
+// und Alert-Typen (kind/tone) nicht neu berechnet werden müssen.
+model Alert {
+  id          String    @id @default(cuid())
+  kind        AlertKind
+  walletAddr  String
+  tokenSymbol String?
+  // Mint address of tokenSymbol — lets the Live Alerts feed link straight to
+  // the token detail page instead of just showing a bare symbol. Nullable:
+  // alerts created before this field existed have no mint on record.
+  tokenMint   String?
+  amountUsd   Float?
+  note        String?                   // z.B. "erste Aktivität" bei NEW_WALLET
+  important   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+
+  @@index([createdAt])
+}
+
+enum AlertKind {
+  WHALE_BUY
+  LARGE_TRANSACTION
+  NEW_WALLET
+  UNUSUAL_MOVEMENT
+  TOKEN_FLOW_ALERT
+}
+
+// Single-row cache of the last computed convergence-signal list. Computing
+// it live needs up to ENRICH_CAP Birdeye calls serialized at ~1 req/sec —
+// fine for a cron tick, much too slow to redo on every page load (was the
+// main cause of the homepage/signals page feeling "very very slow"). The
+// push-signals cron refreshes this row; page reads are then a plain DB read.
+model SignalCache {
+  id         String   @id
+  payload    Json
+  computedAt DateTime @default(now())
+}
+
+// Dedup tracking for the Telegram signal pusher — a mint that already got
+// pushed recently shouldn't spam the channel again on every cron run while
+// the same convergence signal is still active. Cleared naturally once
+// pushedAt falls outside the convergence window (see lib/signals.ts).
+model PushedSignal {
+  id       String   @id @default(cuid())
+  mint     String   @unique
+  pushedAt DateTime @default(now())
+}
+
+// Same dedup/cooldown purpose as PushedSignal, but kept as a fully separate
+// table for exit (sell-convergence) pushes — a mint being in cooldown for a
+// buy push must never block (or be confused with) its own exit-push
+// cooldown, and vice versa. See lib/sell-signal-push.ts.
+model PushedExitSignal {
+  id       String   @id @default(cuid())
+  mint     String   @unique
+  pushedAt DateTime @default(now())
+}
+
+// Same dedup/cooldown purpose again, fully separate table — for solo whale
+// conviction pushes (a single exceptionally-proven wallet making an
+// unusually large buy, no independent confirming wallet required). See
+// lib/solo-signal-push.ts.
+model PushedSoloSignal {
+  id       String   @id @default(cuid())
+  mint     String   @unique
+  pushedAt DateTime @default(now())
+}
+
+// Tracks each cron job's own health, since nothing previously surfaced a
+// silent failure (e.g. an expired API key) beyond cron-job.org's own
+// dashboard, which nobody checks routinely. id = job name (e.g.
+// "discover-wallets"). See lib/cron-health.ts.
+model CronHealth {
+  id                  String    @id
+  lastRunAt           DateTime  @default(now())
+  lastSuccessAt       DateTime?
+  lastError           String?
+  consecutiveFailures Int       @default(0)
+}
+
+// One row per push event (NOT unique by mint like PushedSignal — the same
+// token re-qualifying after its cooldown gets its own outcome row) so we can
+// measure whether our own pushed signals actually performed well, instead of
+// only ever validating the scoring model against heuristics. Populated by
+// lib/signal-outcomes.ts: priceAtPush is captured immediately on push, the
+// price1h/6h/24h/48h checkpoints are filled in by a later cron pass once
+// enough real time has elapsed. priceAtEntry (the actual performance-calc
+// basis, not priceAtPush) is filled in by that same later cron pass once 90s
+// have elapsed — see lib/signal-outcomes.ts and ENTRY_DELAY_SECONDS.
+model SignalOutcome {
+  id                 String    @id @default(cuid())
+  mint               String
+  symbol             String
+  convictionScore    Int
+  pushedAt           DateTime  @default(now())
+  priceAtPush        Float?
+  liquidityAtPushUsd Float?
+  // Captured ~90s after push (ENTRY_DELAY_SECONDS in lib/performance.ts) —
+  // a live trade could never fill at the exact instant a signal fires, so
+  // performance is measured from this simulated entry point, not priceAtPush.
+  priceAtEntry        Float?
+  liquidityAtEntryUsd Float?
+  price1h            Float?
+  price6h            Float?
+  price24h           Float?
+  price48h           Float?
+  // A price "gain" in a token whose liquidity has since collapsed (classic
+  // rug pattern) isn't a gain anyone could have actually realized — captured
+  // alongside price at each checkpoint from the same DexScreener call, no
+  // extra API cost. See lib/performance.ts's "still liquid" stat.
+  liquidity1h        Float?
+  liquidity6h        Float?
+  liquidity24h       Float?
+  liquidity48h       Float?
+  completedAt        DateTime?
+
+  @@index([pushedAt])
+  @@index([completedAt])
+}
+
+// One row per wallet the FIRST time it's ever discovered/created (not
+// re-written on later re-qualifications) — measures whether the discovery
+// pipeline actually produces wallets that stay good, as opposed to
+// rescoring/pruning only ever reacting after the fact. score7d/14d/30d and
+// stillWatched7d/14d/30d are filled in from our own already-fresh Wallet row
+// (no external API needed — unlike SignalOutcome, this is pure DB reads),
+// via lib/wallet-performance.ts. `source` is a coarse discovery-channel
+// bucket ("fomo", "gainers_losers", "early_buyer", "top_traders") so we can
+// compare which channel produces more durable wallets.
+model WalletDiscoveryOutcome {
+  id            String    @id @default(cuid())
+  walletId      String
+  address       String
+  source        String
+  discoveredAt  DateTime  @default(now())
+  initialScore  Int
+  initialPnl30d Float
+  score7d         Int?
+  score14d        Int?
+  score30d        Int?
+  stillWatched7d  Boolean?
+  stillWatched14d Boolean?
+  stillWatched30d Boolean?
+  completedAt   DateTime?
+
+  @@index([discoveredAt])
+  @@index([completedAt])
+}

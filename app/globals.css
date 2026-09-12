@@ -1,0 +1,234 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* TraceTheWhales dashboard */
+.ttw4 * {
+  box-sizing: border-box;
+}
+.ttw4-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.ttw4-navlinks {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+}
+.ttw4-navlinks a {
+  color: #9aa1b8;
+  font-size: 13px;
+  text-decoration: none;
+}
+.ttw4-navlinks a.active {
+  color: #edeff7;
+}
+.ttw4-bottomnav {
+  display: none;
+}
+@media (max-width: 760px) {
+  .ttw4-bottomnav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    background: rgba(7, 8, 18, 0.94);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 6px max(6px, env(safe-area-inset-left)) calc(6px + env(safe-area-inset-bottom))
+      max(6px, env(safe-area-inset-right));
+  }
+  .ttw4-page-content {
+    padding-bottom: 78px;
+  }
+}
+.ttw4-bottomnav a {
+  flex: 1 1 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 6px 0 4px;
+  color: #5b6178;
+  text-decoration: none;
+  font-size: 10px;
+  letter-spacing: 0.2px;
+}
+.ttw4-bottomnav a.active {
+  color: #27e8ff;
+}
+.ttw4-hero {
+  position: relative;
+  border-radius: 20px;
+  padding: 24px 26px 20px;
+  overflow: hidden;
+  margin: 6px 0 26px;
+  background:
+    radial-gradient(600px 320px at 50% 20%, rgba(139, 92, 246, 0.1), transparent 65%),
+    radial-gradient(420px 220px at 10% -10%, rgba(139, 92, 246, 0.14), transparent 60%),
+    radial-gradient(420px 220px at 95% 105%, rgba(39, 232, 255, 0.12), transparent 60%),
+    #0a0c15;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+.ttw4-grid-bg {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 32px 32px;
+  -webkit-mask-image: radial-gradient(75% 95% at 50% 30%, black, transparent);
+  mask-image: radial-gradient(75% 95% at 50% 30%, black, transparent);
+  opacity: 0.4;
+}
+.ttw4-kpis {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+  margin-top: 16px;
+  flex-wrap: nowrap;
+}
+.ttw4-kpi {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0 22px;
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+.ttw4-kpi:first-child {
+  border-left: none;
+  padding-left: 0;
+}
+.ttw4-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 20px;
+}
+.ttw4-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 2px solid transparent;
+  border-radius: 8px;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.ttw4-row:hover {
+  background: rgba(255, 255, 255, 0.025);
+  border-left-color: #27e8ff;
+}
+.ttw4-row:last-child {
+  border-bottom: none;
+}
+.ttw4-flow {
+  padding: 14px 2px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.ttw4-flow:last-child {
+  border-bottom: none;
+}
+.ttw4-alert {
+  display: flex;
+  gap: 10px;
+  padding: 12px 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.ttw4-alert:last-child {
+  border-bottom: none;
+}
+@keyframes ttw4dash {
+  to {
+    stroke-dashoffset: -240;
+  }
+}
+@keyframes ttw4pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
+@keyframes ttw4fade {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes ttw4draw {
+  from {
+    stroke-dashoffset: 340;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.ttw4-trace {
+  stroke-dasharray: 7 11;
+  animation: ttw4dash 7s linear infinite;
+}
+.ttw4-node {
+  animation: ttw4pulse 2.4s ease-in-out infinite;
+}
+.ttw4-alertline {
+  animation: ttw4fade 0.4s ease both;
+}
+.ttw4-spark path {
+  animation: ttw4draw 1.1s ease forwards;
+}
+@media (max-width: 760px) {
+  .ttw4-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ttw4-navlinks {
+    display: none;
+  }
+  .ttw4-chip {
+    display: none;
+  }
+  .ttw4-kpi {
+    padding: 0 10px;
+  }
+}
+@media (max-width: 480px) {
+  .ttw4-kpi {
+    padding: 0 6px;
+  }
+}

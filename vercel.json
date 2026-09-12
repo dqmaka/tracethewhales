@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/discover-wallets",
+      "schedule": "0 6 * * *"
+    }
+  ]
+}

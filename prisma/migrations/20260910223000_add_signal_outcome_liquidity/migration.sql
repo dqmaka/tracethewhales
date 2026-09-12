@@ -1,0 +1,6 @@
+-- AlterTable
+ALTER TABLE "SignalOutcome"
+  ADD COLUMN "liquidity1h" DOUBLE PRECISION,
+  ADD COLUMN "liquidity6h" DOUBLE PRECISION,
+  ADD COLUMN "liquidity24h" DOUBLE PRECISION,
+  ADD COLUMN "liquidity48h" DOUBLE PRECISION;
