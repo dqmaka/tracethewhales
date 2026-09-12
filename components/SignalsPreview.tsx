@@ -3,6 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { colors, mono } from "./theme";
 import { SectionHeader } from "./SectionHeader";
 import { PnlText } from "./PnlText";
+import { displaySymbol } from "@/lib/format";
 import type { ConvergenceSignal } from "@/lib/signals";
 
 export function SignalsPreview({ signals }: { signals: ConvergenceSignal[] }) {
@@ -59,7 +60,7 @@ export function SignalsPreview({ signals }: { signals: ConvergenceSignal[] }) {
                 {s.convictionScore}
               </div>
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 500 }}>{s.symbol}</div>
+                <div style={{ fontSize: 13.5, fontWeight: 500 }}>{displaySymbol(s.symbol, s.mint)}</div>
                 <div style={{ fontSize: 11, color: colors.textFaint, marginTop: 2 }}>
                   {s.walletCount} independent wallets
                 </div>

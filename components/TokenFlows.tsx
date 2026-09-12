@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { colors, mono } from "./theme";
 import { SectionHeader } from "./SectionHeader";
-import { formatUsd } from "@/lib/format";
+import { formatUsd, displaySymbol } from "@/lib/format";
 import type { FlowItem } from "@/lib/dashboard-data";
 
 export function TokenFlows({ flows }: { flows: FlowItem[] }) {
@@ -27,7 +27,7 @@ export function TokenFlows({ flows }: { flows: FlowItem[] }) {
             style={{ display: "block", textDecoration: "none", color: "inherit" }}
           >
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
-              <span style={{ fontSize: 13.5, fontWeight: 500 }}>{f.symbol}</span>
+              <span style={{ fontSize: 13.5, fontWeight: 500 }}>{displaySymbol(f.symbol, f.mint)}</span>
               <span style={{ fontFamily: mono, fontSize: 14, color: colors.mint }}>{f.pct}%</span>
             </div>
             <div style={{ height: 7, borderRadius: 999, background: "rgba(255,255,255,0.06)", overflow: "hidden", marginBottom: 6 }}>

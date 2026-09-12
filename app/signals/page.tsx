@@ -9,7 +9,7 @@ import { colors, mono } from "@/components/theme";
 import { getCachedConvergenceSignals } from "@/lib/signals";
 import { getCachedSellConvergenceSignals } from "@/lib/sell-signals";
 import { getCachedSoloConvictionSignals } from "@/lib/solo-signals";
-import { formatUsd, truncateAddress, formatRelativeTime } from "@/lib/format";
+import { formatUsd, truncateAddress, formatRelativeTime, displaySymbol } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +50,7 @@ export default async function SignalsPage() {
             >
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
                 <Link href={`/tokens/${s.mint}`} style={{ textDecoration: "none", color: "inherit" }}>
-                  <div style={{ fontSize: 16, fontWeight: 500 }}>{s.symbol}</div>
+                  <div style={{ fontSize: 16, fontWeight: 500 }}>{displaySymbol(s.symbol, s.mint)}</div>
                   <div style={{ fontFamily: mono, fontSize: 11, color: colors.textFaint, marginTop: 3 }}>
                     {truncateAddress(s.mint)}
                   </div>
@@ -217,7 +217,7 @@ export default async function SignalsPage() {
           >
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
               <Link href={`/tokens/${s.mint}`} style={{ textDecoration: "none", color: "inherit" }}>
-                <div style={{ fontSize: 16, fontWeight: 500 }}>{s.symbol}</div>
+                <div style={{ fontSize: 16, fontWeight: 500 }}>{displaySymbol(s.symbol, s.mint)}</div>
                 <div style={{ fontFamily: mono, fontSize: 11, color: colors.textFaint, marginTop: 3 }}>
                   {truncateAddress(s.mint)}
                 </div>
@@ -334,7 +334,7 @@ export default async function SignalsPage() {
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
               <Link href={`/tokens/${s.mint}`} style={{ textDecoration: "none", color: "inherit" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <div style={{ fontSize: 16, fontWeight: 500 }}>{s.symbol}</div>
+                  <div style={{ fontSize: 16, fontWeight: 500 }}>{displaySymbol(s.symbol, s.mint)}</div>
                   {s.wasPreviouslyPushedAsBuy && (
                     <div
                       style={{

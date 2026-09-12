@@ -209,6 +209,7 @@ export interface WalletDetail {
   topTokens: TopTokenPerformance[];
   trackedTransactions: {
     token: string;
+    tokenMint: string;
     type: "BUY" | "SELL";
     amountUsd: number;
     occurredAt: Date;
@@ -280,6 +281,7 @@ export async function getWalletDetail(address: string): Promise<WalletDetail | n
     topTokens,
     trackedTransactions: wallet.transactions.map((t) => ({
       token: t.token.symbol,
+      tokenMint: t.token.mint,
       type: t.type,
       amountUsd: t.amountUsd,
       occurredAt: t.occurredAt,

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { formatUsd, truncateAddress, formatRelativeTime } from "./format";
+import { formatUsd, truncateAddress, formatRelativeTime, displaySymbol } from "./format";
 
 describe("formatUsd", () => {
   it("shows cents for values under $1 instead of rounding a real trade down to $0", () => {
@@ -25,6 +25,23 @@ describe("truncateAddress", () => {
 
   it("leaves short strings untouched", () => {
     expect(truncateAddress("short")).toBe("short");
+  });
+});
+
+describe("displaySymbol", () => {
+  const mint = "7xKX9v3s6h1a4pQm2f8dRzT9pQm2f8dRzT9pQm2f8dRz";
+
+  it(
+    "regression: truncates the mint when a token's symbol resolution failed " +
+      "and fell back to the raw mint (upsertToken, lib/tokens.ts) — showing the " +
+      "full 44-char address as a 'symbol' read as broken in the UI",
+    () => {
+      expect(displaySymbol(mint, mint)).toBe(truncateAddress(mint));
+    }
+  );
+
+  it("leaves a genuinely resolved symbol untouched", () => {
+    expect(displaySymbol("JUP", mint)).toBe("JUP");
   });
 });
 

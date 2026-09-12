@@ -8,7 +8,7 @@ import { colors, mono } from "@/components/theme";
 import { PriceChart } from "@/components/PriceChart";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { getTokenDetail } from "@/lib/dashboard-data";
-import { formatUsd, truncateAddress, formatRelativeTime } from "@/lib/format";
+import { formatUsd, truncateAddress, formatRelativeTime, displaySymbol } from "@/lib/format";
 import { MIN_SIGNAL_LIQUIDITY_USD } from "@/lib/signals";
 
 export const dynamic = "force-dynamic";
@@ -116,7 +116,7 @@ export default async function TokenDetailPage({
         >
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
             <div>
-              <div style={{ fontSize: 20, fontWeight: 500 }}>{token.symbol}</div>
+              <div style={{ fontSize: 20, fontWeight: 500 }}>{displaySymbol(token.symbol, token.mint)}</div>
               <div style={{ fontFamily: mono, fontSize: 12.5, color: colors.textFaint, marginTop: 4 }}>
                 {token.mint}
               </div>

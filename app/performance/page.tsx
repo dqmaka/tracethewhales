@@ -12,7 +12,7 @@ import {
   type WalletCheckpointKey,
   type WalletCheckpointStats,
 } from "@/lib/wallet-performance";
-import { truncateAddress, formatRelativeTime } from "@/lib/format";
+import { truncateAddress, formatRelativeTime, displaySymbol } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -237,7 +237,7 @@ export default async function PerformancePage() {
                 {recent.map((r) => (
                   <tr key={`${r.mint}-${r.pushedAt.toISOString()}`} style={{ borderTop: `1px solid ${colors.line}` }}>
                     <td style={{ fontSize: 12.5, padding: "10px 10px 10px 4px" }}>
-                      {r.symbol}
+                      {displaySymbol(r.symbol, r.mint)}
                       <div style={{ fontFamily: mono, fontSize: 10, color: colors.textFaint }}>{truncateAddress(r.mint)}</div>
                     </td>
                     <td style={{ textAlign: "right", fontFamily: mono, fontSize: 12.5, padding: "10px" }}>

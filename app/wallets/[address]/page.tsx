@@ -7,7 +7,7 @@ import { StatLabel } from "@/components/StatLabel";
 import { PnlText } from "@/components/PnlText";
 import { colors, mono } from "@/components/theme";
 import { getWalletDetail } from "@/lib/dashboard-data";
-import { formatUsd, truncateAddress, formatRelativeTime } from "@/lib/format";
+import { formatUsd, truncateAddress, formatRelativeTime, displaySymbol } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
 
@@ -239,7 +239,7 @@ export default async function WalletDetailPage({
                       style={{ display: "block", textDecoration: "none", color: "inherit" }}
                     >
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                        <span style={{ fontSize: 13, fontWeight: 500 }}>{t.symbol}</span>
+                        <span style={{ fontSize: 13, fontWeight: 500 }}>{displaySymbol(t.symbol, t.mint)}</span>
                         <PnlText value={t.pnlPercent} size={15} showArrow />
                       </div>
                       <div style={{ fontSize: 10.5, color: colors.textFaint, marginTop: 8 }}>
@@ -392,7 +392,7 @@ export default async function WalletDetailPage({
                 >
                   {tx.type}
                 </span>
-                <span style={{ fontSize: 12.5, fontWeight: 500 }}>{tx.token}</span>
+                <span style={{ fontSize: 12.5, fontWeight: 500 }}>{displaySymbol(tx.token, tx.tokenMint)}</span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
                 <span style={{ fontFamily: mono, fontSize: 12.5, color: colors.text }}>{formatUsd(tx.amountUsd)}</span>
