@@ -146,6 +146,11 @@ export const TX_HISTORY_LIMIT = 50;
 // so budget in real margin for that plus the webhook sync/DB writes after
 // the loop and Vercel's own request overhead.
 const DISCOVERY_TIME_BUDGET_MS = 12_000;
+// Guards snapshotWatchedWalletScores below — see its own comment for why
+// this exists. Set so a skip still leaves real room for rescoreWatchedWallets
+// (runs after this function returns, see the cron route) to get its own
+// budget, rather than this function silently eating it all first.
+const SNAPSHOT_TIME_BUDGET_CUTOFF_MS = 14_000;
 // Each candidate's own Helius/FOMO/Birdeye calls are independent of every
 // other candidate's — processing them one at a time was pure sequential wait
 // (measured ~5-7s/candidate, mostly external API latency). Birdeye's own
@@ -896,7 +901,20 @@ export async function discoverSmartMoneyWallets(): Promise<DiscoveryResult> {
   }
 
   const webhookSync = await syncHeliusWebhook();
-  await snapshotWatchedWalletScores();
+
+  // Skipped rather than run unconditionally once the watched-wallet pool got
+  // big enough to make this genuinely expensive (live-observed: with 80+
+  // watched wallets, this — plus everything above — regularly ate the
+  // *entire* cron's time budget, leaving rescoreWatchedWallets 0ms to work
+  // with every single tick, which is how several wallets sat un-rescored for
+  // hours and drifted into obvious bot behavior before ever being re-checked).
+  // A skip just means today's snapshot lands on a later tick instead — no
+  // data lost, unlike a starved rescore pass.
+  if (Date.now() - startedAt < SNAPSHOT_TIME_BUDGET_CUTOFF_MS) {
+    await snapshotWatchedWalletScores();
+  } else {
+    console.warn("Skipping score snapshot this tick — already over budget, deferring to the next run.");
+  }
 
   console.log(
     `Discovery finished in ${Date.now() - startedAt}ms — ${pruned.prunedCount} pruned, ` +
@@ -912,8 +930,10 @@ export async function discoverSmartMoneyWallets(): Promise<DiscoveryResult> {
  * tracked wallets don't, since discovery only samples a few sources per run.
  * Left alone, their WalletList sparkline would go flat after their last
  * resurfacing instead of reflecting one point per day. Runs once per
- * discovery pass (hourly) across all watched wallets — cheap (indexed
- * upserts on ~dozens of rows), so no time budget needed.
+ * discovery pass (hourly) across all watched wallets. Was once cheap enough
+ * to run unconditionally regardless of wallet count — no longer true once
+ * the watched pool reached the dozens (each is its own DB round trip); see
+ * SNAPSHOT_TIME_BUDGET_CUTOFF_MS at the call site for how that's now guarded.
  */
 async function snapshotWatchedWalletScores(): Promise<void> {
   const wallets = await prisma.wallet.findMany({
