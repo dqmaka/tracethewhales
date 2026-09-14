@@ -276,10 +276,10 @@ export default async function TokenDetailPage({
               <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
                 <div style={{ textAlign: "right" }}>
                   <div style={{ fontFamily: mono, fontSize: 12.5, color: colors.text }}>
-                    Buy {formatUsd(w.buyUsd)} · Sell {formatUsd(w.sellUsd)}
+                    {formatUsd(w.buyUsd)} bought so far
                   </div>
                   <div style={{ fontSize: 11, color: colors.textFaint, marginTop: 2 }}>
-                    {formatRelativeTime(w.lastActivityAt)}
+                    {formatUsd(w.sellUsd)} sold so far · {formatRelativeTime(w.lastActivityAt)}
                   </div>
                 </div>
                 <ChevronRight size={14} color={colors.textFaint} />
