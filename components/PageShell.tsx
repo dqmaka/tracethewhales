@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { Footer } from "./Footer";
 
 export function PageShell({ children }: { children: ReactNode }) {
   return (
@@ -16,6 +17,7 @@ export function PageShell({ children }: { children: ReactNode }) {
     >
       <div className="ttw4-page-content" style={{ maxWidth: 1040, margin: "0 auto" }}>
         {children}
+        <Footer />
       </div>
     </div>
   );
