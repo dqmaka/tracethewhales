@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { PageShell } from "@/components/PageShell";
 import { NavBar } from "@/components/NavBar";
 import { InfoTooltip } from "@/components/InfoTooltip";
@@ -33,6 +34,12 @@ function formatChange(value: number | null): string {
   if (value === null) return "—";
   return `${value >= 0 ? "+" : ""}${value}%`;
 }
+
+// Every table on this page scrolls horizontally on mobile (overflowX: auto
+// with a minWidth wider than the viewport) — without this, the row-label
+// column scrolls away with everything else, leaving nothing to say which
+// row you're looking at once you've scrolled past it.
+const STICKY_COL: CSSProperties = { position: "sticky", left: 0, background: colors.bg, zIndex: 1 };
 
 function CheckpointCard({ label, stats }: { label: string; stats: CheckpointStats }) {
   return (
@@ -173,7 +180,7 @@ export default async function PerformancePage() {
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 480 }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left", fontSize: 10.5, color: colors.textFaint, fontWeight: 500, padding: "0 10px 8px 4px" }}>
+                  <th style={{ ...STICKY_COL, textAlign: "left", fontSize: 10.5, color: colors.textFaint, fontWeight: 500, padding: "0 10px 8px 4px" }}>
                     CONVICTION
                   </th>
                   {CHECKPOINT_KEYS.map((key) => (
@@ -189,7 +196,7 @@ export default async function PerformancePage() {
               <tbody>
                 {summary.byConvictionBucket.map((bucket) => (
                   <tr key={bucket.label} style={{ borderTop: `1px solid ${colors.line}` }}>
-                    <td style={{ fontSize: 12.5, padding: "10px 10px 10px 4px" }}>{bucket.label}</td>
+                    <td style={{ ...STICKY_COL, fontSize: 12.5, padding: "10px 10px 10px 4px" }}>{bucket.label}</td>
                     {CHECKPOINT_KEYS.map((key) => {
                       const stats = bucket.checkpoints[key];
                       return (
@@ -228,7 +235,7 @@ export default async function PerformancePage() {
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 560 }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left", fontSize: 10.5, color: colors.textFaint, fontWeight: 500, padding: "0 10px 8px 4px" }}>
+                  <th style={{ ...STICKY_COL, textAlign: "left", fontSize: 10.5, color: colors.textFaint, fontWeight: 500, padding: "0 10px 8px 4px" }}>
                     TOKEN
                   </th>
                   <th style={{ textAlign: "right", fontSize: 10.5, color: colors.textFaint, fontWeight: 500, padding: "0 10px 8px" }}>
@@ -250,7 +257,7 @@ export default async function PerformancePage() {
               <tbody>
                 {recent.map((r) => (
                   <tr key={`${r.mint}-${r.pushedAt.toISOString()}`} style={{ borderTop: `1px solid ${colors.line}` }}>
-                    <td style={{ fontSize: 12.5, padding: "10px 10px 10px 4px" }}>
+                    <td style={{ ...STICKY_COL, fontSize: 12.5, padding: "10px 10px 10px 4px" }}>
                       {displaySymbol(r.symbol, r.mint)}
                       <div style={{ fontFamily: mono, fontSize: 10, color: colors.textFaint }}>{truncateAddress(r.mint)}</div>
                     </td>
@@ -320,7 +327,7 @@ export default async function PerformancePage() {
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 480 }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left", fontSize: 10.5, color: colors.textFaint, fontWeight: 500, padding: "0 10px 8px 4px" }}>
+                  <th style={{ ...STICKY_COL, textAlign: "left", fontSize: 10.5, color: colors.textFaint, fontWeight: 500, padding: "0 10px 8px 4px" }}>
                     SOURCE
                   </th>
                   {WALLET_CHECKPOINT_KEYS.map((key) => (
@@ -336,7 +343,7 @@ export default async function PerformancePage() {
               <tbody>
                 {walletSummary.bySource.map((bucket) => (
                   <tr key={bucket.source} style={{ borderTop: `1px solid ${colors.line}` }}>
-                    <td style={{ fontSize: 12.5, padding: "10px 10px 10px 4px", whiteSpace: "nowrap" }}>
+                    <td style={{ ...STICKY_COL, fontSize: 12.5, padding: "10px 10px 10px 4px", whiteSpace: "nowrap" }}>
                       {SOURCE_LABELS[bucket.source] ?? bucket.source}
                     </td>
                     {WALLET_CHECKPOINT_KEYS.map((key) => {
@@ -376,7 +383,7 @@ export default async function PerformancePage() {
             <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 480 }}>
               <thead>
                 <tr>
-                  <th style={{ textAlign: "left", fontSize: 10.5, color: colors.textFaint, fontWeight: 500, padding: "0 10px 8px 4px" }}>
+                  <th style={{ ...STICKY_COL, textAlign: "left", fontSize: 10.5, color: colors.textFaint, fontWeight: 500, padding: "0 10px 8px 4px" }}>
                     WALLET
                   </th>
                   <th style={{ textAlign: "left", fontSize: 10.5, color: colors.textFaint, fontWeight: 500, padding: "0 10px 8px" }}>
@@ -396,7 +403,7 @@ export default async function PerformancePage() {
               <tbody>
                 {recentWallets.map((w) => (
                   <tr key={`${w.address}-${w.discoveredAt.toISOString()}`} style={{ borderTop: `1px solid ${colors.line}` }}>
-                    <td style={{ fontFamily: mono, fontSize: 11.5, padding: "10px 10px 10px 4px" }}>
+                    <td style={{ ...STICKY_COL, fontFamily: mono, fontSize: 11.5, padding: "10px 10px 10px 4px" }}>
                       {truncateAddress(w.address)}
                     </td>
                     <td style={{ fontSize: 11.5, color: colors.textFaint, padding: "10px", whiteSpace: "nowrap" }}>
