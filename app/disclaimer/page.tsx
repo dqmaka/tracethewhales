@@ -21,8 +21,8 @@ export default function DisclaimerPage() {
         <div style={{ margin: "24px 0 4px" }}>
           <div style={{ fontSize: 21, fontWeight: 500, letterSpacing: "-0.3px" }}>Disclaimer</div>
           <div style={{ fontSize: 12.5, color: colors.textFaint, marginTop: 4 }}>
-            Last updated: [DATE]. Please read this in full before using TraceTheWhales or acting on anything it
-            publishes.
+            Last updated: September 15, 2026. Please read this in full before using TraceTheWhales or acting on
+            anything it publishes.
           </div>
         </div>
 
@@ -102,7 +102,7 @@ export default function DisclaimerPage() {
         </Section>
 
         <Section title="7. Contact">
-          <p>Questions about this disclaimer: [YOUR CONTACT EMAIL].</p>
+          <p>Questions about this disclaimer: tracethewhales@gmail.com.</p>
         </Section>
       </div>
     </PageShell>

@@ -22,7 +22,7 @@ export default function TermsPage() {
         <div style={{ margin: "24px 0 4px" }}>
           <div style={{ fontSize: 21, fontWeight: 500, letterSpacing: "-0.3px" }}>Terms of Service</div>
           <div style={{ fontSize: 12.5, color: colors.textFaint, marginTop: 4 }}>
-            Last updated: [DATE]. By using this website or the TraceTheWhales Telegram channel, you agree to these
+            Last updated: September 15, 2026. By using this website or the TraceTheWhales Telegram channel, you agree to these
             terms and to our{" "}
             <Link href="/disclaimer" style={{ color: colors.cyan }}>
               Disclaimer
@@ -33,9 +33,9 @@ export default function TermsPage() {
 
         <Section title="1. Who operates this">
           <p>
-            TraceTheWhales is operated by [YOUR FULL NAME], an individual based in Switzerland (&quot;we&quot;,
+            TraceTheWhales is operated by Loris Eliah Hautle, an individual based in Switzerland (&quot;we&quot;,
             &quot;us&quot;, &quot;the operator&quot;). It is not currently operated through a registered company.
-            Contact: [YOUR CONTACT EMAIL].
+            Contact: tracethewhales@gmail.com.
           </p>
         </Section>
 
@@ -103,13 +103,13 @@ export default function TermsPage() {
         <Section title="9. Governing law and jurisdiction">
           <p>
             These terms are governed by the substantive laws of Switzerland, excluding its conflict-of-law rules.
-            The exclusive place of jurisdiction is [YOUR SWISS CANTON/CITY], Switzerland, to the extent permitted
+            The exclusive place of jurisdiction is Basel, Switzerland, to the extent permitted
             by mandatory law.
           </p>
         </Section>
 
         <Section title="10. Contact">
-          <p>Questions about these terms: [YOUR CONTACT EMAIL].</p>
+          <p>Questions about these terms: tracethewhales@gmail.com.</p>
         </Section>
       </div>
     </PageShell>
