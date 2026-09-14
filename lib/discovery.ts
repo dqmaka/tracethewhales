@@ -7,7 +7,7 @@ import { calculateSmartScore, type ScorableTransaction } from "./scoring";
 import { toScorableTransactions } from "./wallet-activity";
 import { syncHeliusWebhook } from "./webhook-sync";
 import { BASE_TOKEN_MINTS } from "./constants";
-import { pruneStaleWallets, type PruneResult } from "./pruning";
+import { pruneStaleWallets, pruneHighVolumeWallets, type PruneResult } from "./pruning";
 
 const SMART_SCORE_THRESHOLD = 60;
 // Second, independent qualification path: our own behavioral score penalizes
@@ -880,7 +880,12 @@ export interface DiscoveryResult {
 
 export async function discoverSmartMoneyWallets(): Promise<DiscoveryResult> {
   const startedAt = Date.now();
-  const pruned = await pruneStaleWallets();
+  const stalePruned = await pruneStaleWallets();
+  const highVolumePruned = await pruneHighVolumeWallets();
+  const pruned: PruneResult = {
+    prunedCount: stalePruned.prunedCount + highVolumePruned.prunedCount,
+    prunedAddresses: [...stalePruned.prunedAddresses, ...highVolumePruned.prunedAddresses],
+  };
   const candidates = await collectCandidates();
   const qualified: QualifiedWallet[] = [];
   let scanned = 0;
@@ -900,7 +905,19 @@ export async function discoverSmartMoneyWallets(): Promise<DiscoveryResult> {
     for (const result of results) if (result) qualified.push(result);
   }
 
-  const webhookSync = await syncHeliusWebhook();
+  // Independent of everything above succeeding — a Helius outage here must
+  // not swallow this run's qualified/pruned results or block the route's
+  // subsequent rescoreWatchedWallets call, which is exactly the mechanism
+  // that un-watches the bot wallets burning Helius credits in the first
+  // place (see pruneHighVolumeWallets above for the immediate, Helius-free
+  // half of that fix).
+  let webhookSync: Awaited<ReturnType<typeof syncHeliusWebhook>>;
+  try {
+    webhookSync = await syncHeliusWebhook();
+  } catch (err) {
+    console.warn("syncHeliusWebhook failed:", (err as Error).message);
+    webhookSync = { status: "skipped", reason: (err as Error).message };
+  }
 
   // Skipped rather than run unconditionally once the watched-wallet pool got
   // big enough to make this genuinely expensive (live-observed: with 80+

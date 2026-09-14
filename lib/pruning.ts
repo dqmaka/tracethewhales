@@ -8,6 +8,17 @@ import { prisma } from "./prisma";
 // just accumulates dead weight over time.
 const STALE_INACTIVITY_DAYS = 14;
 
+// No genuine human trader manually executes hundreds of swaps a day; a
+// wallet blowing past this is a scripted bot regardless of what its
+// behavior/PnL score says (live-observed: several "Smart Money" wallets
+// doing 2,000-10,000+ trades/24h — each one a Helius "enhanced" webhook
+// delivery, which is what actually burned a 1M-credit/month Helius plan
+// down to zero in days). Pure DB read/write, no Helius call — so this still
+// runs (and still cuts webhook volume) even while Helius itself is down,
+// unlike the score-based bot penalties in discovery.ts which need a fresh
+// Helius transaction fetch to re-evaluate a wallet.
+const HIGH_VOLUME_TRADES_PER_DAY = 300;
+
 export interface PruneResult {
   prunedCount: number;
   prunedAddresses: string[];
@@ -49,4 +60,39 @@ export async function pruneStaleWallets(): Promise<PruneResult> {
   }
 
   return { prunedCount: stale.length, prunedAddresses: stale.map((w) => w.address) };
+}
+
+/**
+ * Soft-prunes wallets whose own recorded transaction volume makes them
+ * obvious automation, independent of (and much faster than) the score-based
+ * bot penalties in discovery.ts, which only re-run a wallet at a time via
+ * rescoreWatchedWallets's rotation — too slow to catch a wallet that ramps
+ * up to thousands of trades/day between rotations.
+ */
+export async function pruneHighVolumeWallets(): Promise<PruneResult> {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+  const grouped = await prisma.transaction.groupBy({
+    by: ["walletId"],
+    where: { occurredAt: { gte: since }, wallet: { isWatched: true } },
+    _count: { _all: true },
+    having: { walletId: { _count: { gt: HIGH_VOLUME_TRADES_PER_DAY } } },
+  });
+
+  if (grouped.length === 0) {
+    return { prunedCount: 0, prunedAddresses: [] };
+  }
+
+  const walletIds = grouped.map((g) => g.walletId);
+  const wallets = await prisma.wallet.findMany({
+    where: { id: { in: walletIds } },
+    select: { id: true, address: true },
+  });
+
+  await prisma.wallet.updateMany({
+    where: { id: { in: walletIds } },
+    data: { isWatched: false },
+  });
+
+  return { prunedCount: wallets.length, prunedAddresses: wallets.map((w) => w.address) };
 }
