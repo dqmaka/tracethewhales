@@ -79,6 +79,11 @@ export interface FlowItem {
   pct: number;
   inflowUsd: number;
   whales: number;
+  /** null = the on-chain lookup itself failed — distinct from a verified
+   * "renounced" (false). Same source as the token detail page's rug-risk
+   * badges (lib/helius.ts's getMintAuthorities). */
+  mintAuthorityActive: boolean | null;
+  freezeAuthorityActive: boolean | null;
 }
 
 /**
@@ -118,15 +123,26 @@ export async function getTokenFlows(limit = 3): Promise<FlowItem[]> {
   const tokens = await prisma.token.findMany({ where: { id: { in: topTokenIds } } });
   const tokenById = new Map(tokens.map((t) => [t.id, t]));
 
-  return topTokenIds.map((tokenId) => {
+  // Bounded by `limit` (default 3) — cheap enough to fetch live on every
+  // Overview page load, unlike the signals pipeline's enrichment (which
+  // covers up to ENRICH_CAP candidates and is paid for once by the
+  // push-signals cron instead, see lib/signals.ts).
+  const authorities = await Promise.all(
+    topTokenIds.map((tokenId) => getMintAuthorities(tokenById.get(tokenId)!.mint).catch(() => null))
+  );
+
+  return topTokenIds.map((tokenId, i) => {
     const entry = byToken.get(tokenId)!;
     const token = tokenById.get(tokenId)!;
+    const auth = authorities[i];
     return {
       symbol: token.symbol,
       mint: token.mint,
       inflowUsd: entry.inflowUsd,
       whales: entry.wallets.size,
       pct: Math.round((entry.inflowUsd / totalInflow) * 100),
+      mintAuthorityActive: auth ? auth.mintAuthority !== null : null,
+      freezeAuthorityActive: auth ? auth.freezeAuthority !== null : null,
     };
   });
 }

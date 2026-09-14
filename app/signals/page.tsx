@@ -3,8 +3,13 @@ import { ArrowUpRight, ChevronRight } from "lucide-react";
 import { PageShell } from "@/components/PageShell";
 import { NavBar } from "@/components/NavBar";
 import { StatLabel } from "@/components/StatLabel";
+import { CopyButton } from "@/components/CopyButton";
 import { PnlText } from "@/components/PnlText";
 import { ScorePill } from "@/components/ScorePill";
+import { ScoreRing } from "@/components/ScoreRing";
+import { WalletIdenticon } from "@/components/WalletIdenticon";
+import { Sparkline } from "@/components/Sparkline";
+import { RiskDot } from "@/components/RiskDot";
 import { colors, mono } from "@/components/theme";
 import { getCachedConvergenceSignals } from "@/lib/signals";
 import { getCachedSellConvergenceSignals } from "@/lib/sell-signals";
@@ -50,14 +55,23 @@ export default async function SignalsPage() {
             >
               <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
                 <Link href={`/tokens/${s.mint}`} style={{ textDecoration: "none", color: "inherit" }}>
-                  <div style={{ fontSize: 16, fontWeight: 500 }}>{displaySymbol(s.symbol, s.mint)}</div>
-                  <div style={{ fontFamily: mono, fontSize: 11, color: colors.textFaint, marginTop: 3 }}>
-                    {truncateAddress(s.mint)}
+                  <div style={{ fontSize: 16, fontWeight: 500, display: "flex", alignItems: "center", gap: 6 }}>
+                    {displaySymbol(s.symbol, s.mint)}
+                    <RiskDot mintAuthorityActive={s.mintAuthorityActive} freezeAuthorityActive={s.freezeAuthorityActive} />
                   </div>
+                  <div style={{ fontFamily: mono, fontSize: 11, color: colors.textFaint, marginTop: 3, display: "flex", alignItems: "center" }}>
+                    {truncateAddress(s.mint)}
+                    <CopyButton value={s.mint} size={10} />
+                  </div>
+                  {s.priceSpark.length > 1 && (
+                    <div style={{ marginTop: 6 }}>
+                      <Sparkline data={s.priceSpark} positive={(s.priceChangeSinceTriggerPercent ?? 0) >= 0} />
+                    </div>
+                  )}
                 </Link>
                 <div style={{ textAlign: "right" }}>
-                  <div style={{ fontFamily: mono, fontSize: 22, fontWeight: 500, color: colors.cyan }}>
-                    {s.convictionScore}
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <ScoreRing score={s.convictionScore} size={52} strokeWidth={4} fontSize={17} />
                   </div>
                   <StatLabel
                     compact
@@ -172,6 +186,7 @@ export default async function SignalsPage() {
                     }}
                   >
                     <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                      <WalletIdenticon address={w.address} size={18} />
                       <ScorePill score={w.score} tooltip="This wallet's Smart Score (0-100) — how trustworthy its trading looks, re-checked periodically." />
                       <span style={{ fontSize: 12 }}>{w.label ?? truncateAddress(w.address)}</span>
                       <PnlText value={w.pnl30d} size={10.5} tooltip="This wallet's own realized profit/loss over the last 30 days." />
@@ -218,13 +233,14 @@ export default async function SignalsPage() {
             <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
               <Link href={`/tokens/${s.mint}`} style={{ textDecoration: "none", color: "inherit" }}>
                 <div style={{ fontSize: 16, fontWeight: 500 }}>{displaySymbol(s.symbol, s.mint)}</div>
-                <div style={{ fontFamily: mono, fontSize: 11, color: colors.textFaint, marginTop: 3 }}>
+                <div style={{ fontFamily: mono, fontSize: 11, color: colors.textFaint, marginTop: 3, display: "flex", alignItems: "center" }}>
                   {truncateAddress(s.mint)}
+                  <CopyButton value={s.mint} size={10} />
                 </div>
               </Link>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontFamily: mono, fontSize: 22, fontWeight: 500, color: colors.violet }}>
-                  {s.convictionScore}
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <ScoreRing score={s.convictionScore} size={52} strokeWidth={4} fontSize={17} />
                 </div>
                 <StatLabel
                   compact
@@ -295,6 +311,7 @@ export default async function SignalsPage() {
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                  <WalletIdenticon address={s.wallet.address} size={18} />
                   <ScorePill score={s.wallet.score} tooltip="This wallet's Smart Score (0-100) — how trustworthy its trading looks, re-checked periodically." />
                   <span style={{ fontSize: 12 }}>{s.wallet.label ?? truncateAddress(s.wallet.address)}</span>
                   <PnlText value={s.wallet.pnl30d} size={10.5} tooltip="This wallet's own realized profit/loss over the last 30 days." />
@@ -350,13 +367,14 @@ export default async function SignalsPage() {
                     </div>
                   )}
                 </div>
-                <div style={{ fontFamily: mono, fontSize: 11, color: colors.textFaint, marginTop: 3 }}>
+                <div style={{ fontFamily: mono, fontSize: 11, color: colors.textFaint, marginTop: 3, display: "flex", alignItems: "center" }}>
                   {truncateAddress(s.mint)}
+                  <CopyButton value={s.mint} size={10} />
                 </div>
               </Link>
               <div style={{ textAlign: "right" }}>
-                <div style={{ fontFamily: mono, fontSize: 22, fontWeight: 500, color: colors.coral }}>
-                  {s.exitConvictionScore}
+                <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                  <ScoreRing score={s.exitConvictionScore} size={52} strokeWidth={4} fontSize={17} />
                 </div>
                 <StatLabel
                   compact
@@ -426,6 +444,7 @@ export default async function SignalsPage() {
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 0 }}>
+                    <WalletIdenticon address={w.address} size={18} />
                     <ScorePill score={w.score} tooltip="This wallet's Smart Score (0-100) — how trustworthy its trading looks, re-checked periodically." />
                     <span style={{ fontSize: 12 }}>{w.label ?? truncateAddress(w.address)}</span>
                     <PnlText value={w.pnl30d} size={10.5} tooltip="This wallet's own realized profit/loss over the last 30 days." />

@@ -3,7 +3,7 @@ import { WhaleRadar } from "./WhaleRadar";
 import { StatLabel } from "./StatLabel";
 import { PnlText } from "./PnlText";
 import { LiveRefresh } from "./LiveRefresh";
-import { formatCompactUsd } from "@/lib/format";
+import { CountUp } from "./CountUp";
 import type { DashboardKpis, WalletRow } from "@/lib/dashboard-data";
 
 export function Hero({ kpis, topWallet }: { kpis: DashboardKpis; topWallet?: WalletRow }) {
@@ -61,7 +61,7 @@ export function Hero({ kpis, topWallet }: { kpis: DashboardKpis; topWallet?: Wal
                 whiteSpace: "nowrap",
               }}
             >
-              {formatCompactUsd(kpis.trackedVolumeUsd)}
+              <CountUp value={kpis.trackedVolumeUsd} format="compact-usd" />
             </div>
             <StatLabel>
               TRACKED VOLUME
@@ -69,7 +69,7 @@ export function Hero({ kpis, topWallet }: { kpis: DashboardKpis; topWallet?: Wal
           </div>
           <div className="ttw4-kpi">
             <div style={{ fontFamily: mono, fontSize: "clamp(16px,2.6vw,22px)", fontWeight: 500, color: colors.text, whiteSpace: "nowrap" }}>
-              {kpis.walletsTracked}
+              <CountUp value={kpis.walletsTracked} />
             </div>
             <StatLabel>
               WALLETS TRACKED
@@ -77,7 +77,7 @@ export function Hero({ kpis, topWallet }: { kpis: DashboardKpis; topWallet?: Wal
           </div>
           <div className="ttw4-kpi">
             <div style={{ fontFamily: mono, fontSize: "clamp(16px,2.6vw,22px)", fontWeight: 500, color: colors.mint, whiteSpace: "nowrap" }}>
-              {kpis.avgSmartScore}
+              <CountUp value={kpis.avgSmartScore} />
             </div>
             <StatLabel>
               AVG. SMART SCORE

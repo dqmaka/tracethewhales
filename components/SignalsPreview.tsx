@@ -3,6 +3,9 @@ import { ArrowRight } from "lucide-react";
 import { colors, mono } from "./theme";
 import { SectionHeader } from "./SectionHeader";
 import { PnlText } from "./PnlText";
+import { ScoreRing } from "./ScoreRing";
+import { Sparkline } from "./Sparkline";
+import { RiskDot } from "./RiskDot";
 import { displaySymbol } from "@/lib/format";
 import type { ConvergenceSignal } from "@/lib/signals";
 
@@ -41,38 +44,27 @@ export function SignalsPreview({ signals }: { signals: ConvergenceSignal[] }) {
             style={{ textDecoration: "none", color: "inherit" }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-              <div
-                style={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: "50%",
-                  flexShrink: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontFamily: mono,
-                  fontSize: 10.5,
-                  fontWeight: 500,
-                  background: "rgba(39,232,255,0.12)",
-                  color: colors.cyan,
-                }}
-              >
-                {s.convictionScore}
-              </div>
+              <ScoreRing score={s.convictionScore} size={30} strokeWidth={2.5} fontSize={10.5} />
               <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 500 }}>{displaySymbol(s.symbol, s.mint)}</div>
+                <div style={{ fontSize: 13.5, fontWeight: 500, display: "flex", alignItems: "center", gap: 5 }}>
+                  {displaySymbol(s.symbol, s.mint)}
+                  <RiskDot mintAuthorityActive={s.mintAuthorityActive} freezeAuthorityActive={s.freezeAuthorityActive} />
+                </div>
                 <div style={{ fontSize: 11, color: colors.textFaint, marginTop: 2 }}>
                   {s.walletCount} independent wallets
                 </div>
               </div>
             </div>
-            {s.priceChangeSinceTriggerPercent !== null ? (
-              <div style={{ flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
+              {s.priceSpark.length > 1 && (
+                <Sparkline data={s.priceSpark} positive={(s.priceChangeSinceTriggerPercent ?? 0) >= 0} />
+              )}
+              {s.priceChangeSinceTriggerPercent !== null ? (
                 <PnlText value={s.priceChangeSinceTriggerPercent} size={13} showArrow />
-              </div>
-            ) : (
-              <div style={{ fontFamily: mono, fontSize: 13, color: colors.textFaint }}>—</div>
-            )}
+              ) : (
+                <div style={{ fontFamily: mono, fontSize: 13, color: colors.textFaint }}>—</div>
+              )}
+            </div>
           </Link>
         ))}
       </div>

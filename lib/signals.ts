@@ -2,6 +2,7 @@ import { prisma } from "./prisma";
 import { BASE_TOKEN_MINTS } from "./constants";
 import { getHistoricalPrice } from "./geckoterminal";
 import { getTokenOverview } from "./dexscreener";
+import { getMintAuthorities } from "./helius";
 
 // GeckoTerminal's own throttle now runs ~2.1s/call (see lib/geckoterminal.ts)
 // and can retry once on a 429, so a single candidate's enrichment can
@@ -142,6 +143,16 @@ export interface ConvergenceSignal {
   volume24hUsd: number | null;
   marketCapUsd: number | null;
   riskFlags: RiskFlag[];
+  /** null = the on-chain lookup itself failed — distinct from a verified
+   * "renounced" (false). Never treat null as "safe". Same source as the
+   * token detail page's rug-risk badges (lib/helius.ts's getMintAuthorities),
+   * fetched here too so list views can show it without a click-through. */
+  mintAuthorityActive: boolean | null;
+  freezeAuthorityActive: boolean | null;
+  /** Close prices from the same GeckoTerminal history call already fetched
+   * for priceAtTrigger below — kept as a plain array (not re-fetched) so a
+   * list row can show a tiny price trend without its own extra API cost. */
+  priceSpark: number[];
 }
 
 /**
@@ -214,21 +225,36 @@ export async function getConvergenceSignals(limit = 10): Promise<ConvergenceSign
       let liquidityUsd: number | null = null;
       let volume24hUsd: number | null = null;
       let marketCapUsd: number | null = null;
+      let priceSpark: number[] = [];
+      let mintAuthorityActive: boolean | null = null;
+      let freezeAuthorityActive: boolean | null = null;
       try {
         const to = Math.floor(Date.now() / 1000);
         const from = Math.floor(g.firstBuyAt.getTime() / 1000) - 3600;
         const enrichment = await withTimeout(
-          Promise.all([getHistoricalPrice(g.mint, { from, to, type: "1H" }), getTokenOverview(g.mint)]),
+          Promise.all([
+            getHistoricalPrice(g.mint, { from, to, type: "1H" }),
+            getTokenOverview(g.mint),
+            // Independent of the two calls above — a failure here shouldn't
+            // cost the signal its price/liquidity data, so it's caught on
+            // its own rather than left to reject the whole Promise.all.
+            getMintAuthorities(g.mint).catch(() => null),
+          ]),
           ENRICH_TIMEOUT_MS
         );
         if (enrichment === null) {
           console.warn(`Price/liquidity lookup timed out for signal ${g.symbol} (${g.mint})`);
         } else {
-          const [history, overview] = enrichment;
+          const [history, overview, authorities] = enrichment;
           priceNow = overview.priceUsd;
           liquidityUsd = overview.liquidityUsd;
           volume24hUsd = overview.volume24hUsd;
           marketCapUsd = overview.marketCapUsd;
+          priceSpark = history.map((p) => p.value);
+          if (authorities) {
+            mintAuthorityActive = authorities.mintAuthority !== null;
+            freezeAuthorityActive = authorities.freezeAuthority !== null;
+          }
           if (history.length > 0) {
             const targetTime = Math.floor(g.firstBuyAt.getTime() / 1000);
             priceAtTrigger = history.reduce((closest, p) =>
@@ -305,6 +331,9 @@ export async function getConvergenceSignals(limit = 10): Promise<ConvergenceSign
         volume24hUsd,
         marketCapUsd,
         riskFlags,
+        mintAuthorityActive,
+        freezeAuthorityActive,
+        priceSpark,
       };
     })
   );
@@ -338,13 +367,25 @@ export async function refreshSignalCache(): Promise<ConvergenceSignal[]> {
   return signals;
 }
 
-/** JSON round-tripping turns Dates into strings — revive the ones pages rely on. */
+/**
+ * JSON round-tripping turns Dates into strings — revive the ones pages rely
+ * on. Also backfills fields that didn't exist yet when a still-cached
+ * payload was written (the cache row persists across deploys — a signal
+ * cached by yesterday's code literally doesn't have today's new keys at
+ * all, not even as `null`) — without this, a page reading a pre-upgrade
+ * cache entry would crash on `s.priceSpark.length` rather than just show
+ * "unknown" for the new fields until the next push-signals cron tick
+ * recomputes it.
+ */
 function reviveSignal(raw: ConvergenceSignal): ConvergenceSignal {
   return {
     ...raw,
     firstBuyAt: new Date(raw.firstBuyAt),
     lastBuyAt: new Date(raw.lastBuyAt),
     wallets: raw.wallets.map((w) => ({ ...w, lastBuyAt: new Date(w.lastBuyAt) })),
+    mintAuthorityActive: raw.mintAuthorityActive ?? null,
+    freezeAuthorityActive: raw.freezeAuthorityActive ?? null,
+    priceSpark: raw.priceSpark ?? [],
   };
 }
 

@@ -5,6 +5,8 @@ import { Sparkline } from "./Sparkline";
 import { ScoreBar } from "./ScoreBar";
 import { SectionHeader } from "./SectionHeader";
 import { PnlText } from "./PnlText";
+import { WalletIdenticon } from "./WalletIdenticon";
+import { CopyButton } from "./CopyButton";
 import { truncateAddress } from "@/lib/format";
 import type { WalletRow } from "@/lib/dashboard-data";
 
@@ -26,19 +28,12 @@ export function WalletList({ wallets }: { wallets: WalletRow[] }) {
             style={{ textDecoration: "none", color: "inherit" }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-              <svg width="26" height="26" viewBox="0 0 26 26" style={{ flexShrink: 0 }} aria-hidden="true">
-                <path
-                  d="M3 15 C4 9 9 6 14 6 C19 6 23 9 25 12 C22 11 20 12 19 14 C21 15 22 17 23 19 C20 19 18 17 17 16 C14 20 8 21 4 18 Z"
-                  fill="none"
-                  stroke={w.pnl >= 0 ? colors.cyan : colors.coral}
-                  strokeWidth="1.2"
-                  opacity="0.85"
-                />
-              </svg>
+              <WalletIdenticon address={w.address} size={26} />
               <div style={{ minWidth: 0 }}>
                 <div style={{ fontSize: 13.5, fontWeight: 500 }}>{w.label ?? truncateAddress(w.address)}</div>
-                <div style={{ fontSize: 11, color: colors.textFaint, fontFamily: mono, marginBottom: 3 }}>
+                <div style={{ fontSize: 11, color: colors.textFaint, fontFamily: mono, marginBottom: 3, display: "flex", alignItems: "center" }}>
                   {truncateAddress(w.address)}
+                  <CopyButton value={w.address} size={10} />
                 </div>
                 <ScoreBar score={w.score} />
               </div>

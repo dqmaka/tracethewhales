@@ -6,6 +6,8 @@ import { SectionHeader } from "@/components/SectionHeader";
 import { StatLabel } from "@/components/StatLabel";
 import { PnlText } from "@/components/PnlText";
 import { colors, mono } from "@/components/theme";
+import { CopyButton } from "@/components/CopyButton";
+import { WalletIdenticon } from "@/components/WalletIdenticon";
 import { getWalletDetail } from "@/lib/dashboard-data";
 import { formatUsd, truncateAddress, formatRelativeTime, displaySymbol } from "@/lib/format";
 
@@ -64,11 +66,14 @@ export default async function WalletDetailPage({
           }}
         >
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-            <div>
-              <div style={{ fontSize: 20, fontWeight: 500 }}>{wallet.label ?? truncateAddress(wallet.address)}</div>
-              <div style={{ fontFamily: mono, fontSize: 12.5, color: colors.textFaint, marginTop: 4 }}>
-                {wallet.address}
-              </div>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <WalletIdenticon address={wallet.address} size={36} />
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 500 }}>{wallet.label ?? truncateAddress(wallet.address)}</div>
+                <div style={{ fontFamily: mono, fontSize: 12.5, color: colors.textFaint, marginTop: 4, display: "flex", alignItems: "center" }}>
+                  {wallet.address}
+                  <CopyButton value={wallet.address} />
+                </div>
               {wallet.tag && (
                 <div
                   style={{
@@ -84,6 +89,7 @@ export default async function WalletDetailPage({
                   {wallet.tag}
                 </div>
               )}
+              </div>
             </div>
             <a
               href={`https://solscan.io/account/${wallet.address}`}

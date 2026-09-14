@@ -7,6 +7,8 @@ import { StatLabel } from "@/components/StatLabel";
 import { colors, mono } from "@/components/theme";
 import { PriceChart } from "@/components/PriceChart";
 import { InfoTooltip } from "@/components/InfoTooltip";
+import { CopyButton } from "@/components/CopyButton";
+import { WalletIdenticon } from "@/components/WalletIdenticon";
 import { getTokenDetail } from "@/lib/dashboard-data";
 import { formatUsd, truncateAddress, formatRelativeTime, displaySymbol } from "@/lib/format";
 import { MIN_SIGNAL_LIQUIDITY_USD } from "@/lib/signals";
@@ -117,8 +119,9 @@ export default async function TokenDetailPage({
           <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
             <div>
               <div style={{ fontSize: 20, fontWeight: 500 }}>{displaySymbol(token.symbol, token.mint)}</div>
-              <div style={{ fontFamily: mono, fontSize: 12.5, color: colors.textFaint, marginTop: 4 }}>
+              <div style={{ fontFamily: mono, fontSize: 12.5, color: colors.textFaint, marginTop: 4, display: "flex", alignItems: "center" }}>
                 {token.mint}
+                <CopyButton value={token.mint} />
               </div>
               {token.name && <div style={{ fontSize: 12.5, color: colors.textDim, marginTop: 4 }}>{token.name}</div>}
               <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginTop: 8 }}>
@@ -263,9 +266,12 @@ export default async function TokenDetailPage({
                 color: "inherit",
               }}
             >
-              <div style={{ minWidth: 0 }}>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>{w.label ?? truncateAddress(w.address)}</div>
-                <div style={{ fontFamily: mono, fontSize: 11, color: colors.textFaint }}>{truncateAddress(w.address)}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
+                <WalletIdenticon address={w.address} size={22} />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 500 }}>{w.label ?? truncateAddress(w.address)}</div>
+                  <div style={{ fontFamily: mono, fontSize: 11, color: colors.textFaint }}>{truncateAddress(w.address)}</div>
+                </div>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 14, flexShrink: 0 }}>
                 <div style={{ textAlign: "right" }}>
