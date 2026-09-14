@@ -36,7 +36,19 @@ function formatChange(value: number | null): string {
 
 function CheckpointCard({ label, stats }: { label: string; stats: CheckpointStats }) {
   return (
-    <div style={{ padding: 14, borderRadius: 12, background: colors.panelSoft, border: `1px solid ${colors.line}` }}>
+    <a
+      href="#recent-pushes"
+      style={{
+        display: "block",
+        padding: 14,
+        borderRadius: 12,
+        background: colors.panelSoft,
+        border: `1px solid ${colors.line}`,
+        color: "inherit",
+        textDecoration: "none",
+        cursor: "pointer",
+      }}
+    >
       <div style={{ fontFamily: mono, fontSize: 22, fontWeight: 500, color: changeColor(stats.avgChangePercent) }}>
         {formatChange(stats.avgChangePercent)}
       </div>
@@ -66,7 +78,8 @@ function CheckpointCard({ label, stats }: { label: string; stats: CheckpointStat
           <InfoTooltip text="Share of these tokens whose liquidity was still above the tradeable floor at this checkpoint. Below 100% means some of the price 'gains' shown above may not have actually been possible to sell into." />
         </div>
       )}
-    </div>
+      <div style={{ fontSize: 10.5, color: colors.cyan, marginTop: 8 }}>View signals ↓</div>
+    </a>
   );
 }
 
@@ -205,6 +218,7 @@ export default async function PerformancePage() {
           </div>
 
           <SectionHeader
+            id="recent-pushes"
             style={{ marginTop: 28, marginBottom: 12 }}
             tooltip="Every individual signal we've pushed to Telegram, with its net-of-cost performance at each checkpoint since (entry ~90s after push, minus slippage and gas). A ⚠ next to a number means liquidity had already dropped too low by then for that change to be realistically tradeable."
           >

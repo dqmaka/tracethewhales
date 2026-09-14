@@ -17,14 +17,16 @@ export function SectionHeader({
   tooltip,
   suffix,
   style,
+  id,
 }: {
   children: ReactNode;
   tooltip?: string;
   suffix?: ReactNode;
   style?: CSSProperties;
+  id?: string;
 }) {
   return (
-    <div style={{ fontSize: 11.5, letterSpacing: "1.4px", color: colors.textDim, ...style }}>
+    <div id={id} style={{ fontSize: 11.5, letterSpacing: "1.4px", color: colors.textDim, ...style }}>
       <span style={{ whiteSpace: "nowrap" }}>
         {children}
         {tooltip && <InfoTooltip text={tooltip} />}
